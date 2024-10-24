@@ -40,26 +40,26 @@ services:
         networks:
             - internal
 
-    composer:
-        container_name: ping-composer
-        build:
-            context: docker/composer
-            dockerfile: Dockerfile
-        volumes:
-            - ./:/var/www/html
-        networks:
-            - internal
-
-    artisan:
-        container_name: ping-artisan
-        build:
-            context: docker/php-fpm
-            dockerfile: Dockerfile
-        volumes:
-            - ./:/var/www/html
-        entrypoint: ["php", "/var/www/html/artisan"]
-        networks:
-            - internal
+#    composer:
+#        container_name: ping-composer
+#        build:
+#            context: docker/composer
+#            dockerfile: Dockerfile
+#        volumes:
+#            - ./:/var/www/html
+#        networks:
+#            - internal
+#
+#    artisan:
+#        container_name: ping-artisan
+#        build:
+#            context: docker/php-fpm
+#            dockerfile: Dockerfile
+#        volumes:
+#            - ./:/var/www/html
+#        entrypoint: ["php", "/var/www/html/artisan"]
+#        networks:
+#            - internal
 
 networks:
     internal:
