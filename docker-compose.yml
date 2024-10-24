@@ -1,31 +1,29 @@
+name: pingApi
 services:
     nginx:
-        build:
-            context: .
-            dockerfile: ./docker/nginx/Dockerfile
-        ports:
-            - "8090:80"
+        container_name: ping-nginx
+        image: "nginx:stable-alpine"
         networks:
             - internal
         restart: unless-stopped
         tty: true
+        ports:
+            - "8090:80"
         volumes:
-            - ./:/var/www/html/
-            - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
-            - ./docker/nginx/fastcgi-php.conf:/etc/nginx/fastcgi-php.conf
-        container_name: ping-nginx
+            - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+            - ./:/var/www/html
+        depends_on:
+            - mysql
+            - php-fpm
     php-fpm:
+        container_name: ping-php-fpm
         build:
-            context: .
-            dockerfile: ./docker/php-fpm/Dockerfile
+            context: docker/php-fpm
+            dockerfile: Dockerfile
         networks:
             - internal
         volumes:
-            - ./:/var/www/html/
-            - ./docker/php-fpm/zzz-xdebug.ini:/usr/local/etc/php/conf.d/zzz-xdebug.ini
-        environment:
-            XDEBUG_CONFIG: discover_client_host=true client_host=host.docker.internal log_level=0
-        container_name: ping-php
+            - ./:/var/www/html
         expose:
             - "9000"
     mysql:
@@ -33,7 +31,7 @@ services:
         restart: always
         image: mysql:9.0.1
         ports:
-            - "3309:3306"
+            - "3316:3306"
         environment:
             MYSQL_DATABASE: ping_db
             MYSQL_ROOT_PASSWORD: root
@@ -41,25 +39,32 @@ services:
             - mysql_data:/var/lib/mysql
         networks:
             - internal
-    mysql-testing:
-        container_name: ping-mysql-testing
-        restart: always
-        image: mysql:9.0.1
-        ports:
-            - "3310:3306"
-        environment:
-            MYSQL_DATABASE: ping_db_testing
-            MYSQL_ROOT_PASSWORD: root
+
+    composer:
+        container_name: ping-composer
+        build:
+            context: docker/composer
+            dockerfile: Dockerfile
         volumes:
-            - mysql_test_data:/var/lib/mysql
+            - ./:/var/www/html
         networks:
             - internal
+
+    artisan:
+        container_name: ping-artisan
+        build:
+            context: docker/php-fpm
+            dockerfile: Dockerfile
+        volumes:
+            - ./:/var/www/html
+        entrypoint: ["php", "/var/www/html/artisan"]
+        networks:
+            - internal
+
 networks:
     internal:
         driver: bridge
+
 volumes:
     mysql_data:
         driver: local
-    mysql_test_data:
-        driver: local
-
